@@ -275,6 +275,8 @@ bool bitmap_contains_bestFit (struct bitmap *b, size_t start, size_t cnt, bool v
   ASSERT (start + cnt <= b->bit_cnt);
   while(!bitmap_test (b, start + i) == value) {
     i++;
+    if(i == b->bit_cnt)
+      break;
   }
   if(start + i >= cnt) {
     b->embSize = start + i;
