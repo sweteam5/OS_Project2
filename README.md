@@ -12,7 +12,7 @@ Implementation of Memory Management Schemes
 2. 보고서 작성<br>
 요구사항 1~6까지 구현하고 수행한 모든 작업을 보고서로 작성한다.<br>
 보고서에는 각 요구사항 별 문제 해결 방법, 요구사항 수행(개발 또는 성능측정) 내용과 결과 등을 상세하게 기술해야 한다.<br>
-성능 평가 척도의 경우, 예를 들어 Replacement Policy에서 성능 측정 척도를 Hit/Miss Ratio로 선정하였을 경우 그렇게 선정한 이유를 기술한다. 
+성능 평가 척도의 경우 선정한 이유를 기술한다. 
 
 
 ## Team Members
