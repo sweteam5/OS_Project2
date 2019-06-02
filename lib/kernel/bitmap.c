@@ -28,6 +28,7 @@ struct bitmap
   {
     size_t bit_cnt;     /* Number of bits. */
     elem_type *bits;    /* Elements that represent bits. */
+    size_t embSize;     /* For bestFit : Size of page block that is bigger than cnt */
   };
 
 /* Returns the index of the element that contains the bit
@@ -82,6 +83,7 @@ bitmap_create (size_t bit_cnt)
   if (b != NULL)
     {
       b->bit_cnt = bit_cnt;
+      b->embSize = 0;
       b->bits = malloc (byte_cnt (bit_cnt));
       if (b->bits != NULL || bit_cnt == 0)
         {
@@ -105,6 +107,7 @@ bitmap_create_in_buf (size_t bit_cnt, void *block, size_t block_size UNUSED)
 
   b->bit_cnt = bit_cnt;
   b->bits = (elem_type *) (b + 1);
+  b->embSize = 0;
   bitmap_set_all (b, false);
   return b;
 }
@@ -262,6 +265,25 @@ bitmap_contains (const struct bitmap *b, size_t start, size_t cnt, bool value)
   return false;
 }
 
+/* Returns true if any bits in B from START to first bitmap_test() == VALUE
+   is bigger than CNT. And false otherwise. */
+bool bitmap_contains_bestFit (struct bitmap *b, size_t start, size_t cnt, bool value) {
+  size_t i = 0;
+
+  ASSERT (b!= NULL);
+  ASSERT (start <= b->bit_cnt);
+  ASSERT (start + cnt <= b->bit_cnt);
+  while(!bitmap_test (b, start + i) == value) {
+    i++;
+  }
+  if(start + i >= cnt) {
+    b->embSize = start + i;
+    return false;
+  } else {
+    return true;
+  }
+}
+
 /* Returns true if any bits in B between START and START + CNT,
    exclusive, are set to true, and false otherwise.*/
 bool
@@ -309,6 +331,49 @@ bitmap_scan (const struct bitmap *b, size_t start, size_t cnt, bool value)
   return BITMAP_ERROR;
 }
 
+size_t
+bitmap_scan_next_goFirst (const struct bitmap *b, size_t last_alloc, size_t cnt, bool value) {
+  /* Next Fit에서 끝까지 탐색했는데 BITMAP_ERROR인 경우 처음으로 되돌아와 다시 탐색한다. */
+  ASSERT (b != NULL);
+
+  if( cnt <= b->bit_cnt) {
+    size_t last = last_alloc - cnt;
+    size_t i;
+    for(i = 0; i < last; i++) {
+      if(!bitmap_contains (b, i, cnt, !value)) 
+        return i;
+    }
+  }
+  return BITMAP_ERROR;
+}
+
+size_t
+bitmap_scan_bestFit (const struct bitmap *b, size_t cnt, bool value) 
+{
+  // bestFit으로 bitmap scan을 진행
+  ASSERT (b != NULL);
+  size_t best_idx = BITMAP_ERROR;                           // 연속된 cnt개의 페이지 블록을 찾지 못한 경우 BITMAP_ERROR 반환
+  size_t block_size = b->bit_cnt;
+
+  if (cnt <= b->bit_cnt) 
+    {
+      size_t last = b->bit_cnt - cnt;
+      size_t i;
+      for (i = 0; i <= last; i++) {
+        // TODO: bitmap_contains_bestFit -> bitmap_test를 false가 날때까지 진행
+        if(!bitmap_contains_bestFit(b, i, cnt, value)) {
+          // if true : block size - cnt 가 block_size-cnt보다 작으면 block_size갱신, best_idx 갱신
+          if(b->embSize - cnt < block_size - cnt) {
+            best_idx = i;                                   // best_idx 갱신
+            block_size = b->embSize;                        // block_size 갱신
+          }
+        }
+      }
+      return best_idx;
+    }
+  return BITMAP_ERROR;
+}
+
 /* Finds the first group of CNT consecutive bits in B at or after
    START that are all set to VALUE, flips them all to !VALUE,
    and returns the index of the first bit in the group.
@@ -320,6 +385,29 @@ size_t
 bitmap_scan_and_flip (struct bitmap *b, size_t start, size_t cnt, bool value)
 {
   size_t idx = bitmap_scan (b, start, cnt, value);
+  if (idx != BITMAP_ERROR) 
+    bitmap_set_multiple (b, idx, cnt, !value);
+  return idx;
+}
+
+size_t
+bitmap_scan_and_flip_nextFit (struct bitmap *b, size_t start, size_t cnt, bool value) {
+  /* bitmap_scan_next_goFirst()를 활용하기 위해 bitmap_scan_and_flip()에서 분리 */
+  size_t idx = bitmap_scan (b, start, cnt, value);                      // 마지막 할당 인덱스부터 끝까지 탐색
+  if(idx == BITMAP_ERROR)
+    idx = bitmap_scan_next_goFirst (b, start, cnt, value);              // 실패한 경우 처음부터 마지막 할당 인덱스까지 탐색
+  else
+    bitmap_set_multiple (b, idx, cnt, !value);
+  
+  if(idx != BITMAP_ERROR)
+    bitmap_set_multiple (b, idx, cnt, !value);
+
+  return idx;
+  
+}
+
+bitmap_scan_and_flip_bestFit (struct bitmap *b, size_t cnt, bool value) {
+  size_t idx = bitmap_scan_bestFit (b, cnt, value);                     // bestFit 알고리즘에 따라 탐색
   if (idx != BITMAP_ERROR) 
     bitmap_set_multiple (b, idx, cnt, !value);
   return idx;
