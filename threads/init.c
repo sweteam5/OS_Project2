@@ -98,7 +98,6 @@ main (void)
   palloc_init (user_page_limit);
   malloc_init ();
   paging_init ();
-
   /* Segmentation. */
 #ifdef USERPROG
   tss_init ();
@@ -107,6 +106,7 @@ main (void)
 
   /* Initialize interrupt handlers. */
   intr_init ();
+  printf("intr_init ends.\n");
   timer_init ();
   kbd_init ();
   input_init ();

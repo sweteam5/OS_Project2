@@ -279,7 +279,7 @@ bool bitmap_contains_bestFit (struct bitmap *b, size_t start, size_t cnt, bool v
       break;
 
     i++;
-    if(i == b->bit_cnt) {
+    if(start + i == b->bit_cnt) {
       break;
     }
   }
@@ -360,10 +360,8 @@ bitmap_scan_bestFit (const struct bitmap *b, size_t cnt, bool value)
   // bestFit으로 bitmap scan을 진행
   ASSERT (b != NULL);
   size_t best_idx = BITMAP_ERROR;                           // 연속된 cnt개의 페이지 블록을 찾지 못한 경우 BITMAP_ERROR 반환
-  size_t block_size = b->bit_cnt + 1024;
+  size_t block_size = b->bit_cnt + 1;
 
-  printf("All settings OK. Start scanning...\n");
-  printf("%d\n", b->bit_cnt);
   if (cnt <= b->bit_cnt) 
     {
       size_t last = b->bit_cnt - cnt;

@@ -79,8 +79,8 @@ palloc_get_multiple (enum palloc_flags flags, size_t page_cnt)
     return NULL;
 
   lock_acquire (&pool->lock);
-  /* page_idx = bitmap_scan_and_flip (pool->used_map, 0, page_cnt, false);  // first fit 
-  page_idx = bitmap_scan_and_flip_nextFit (pool->used_map, pool->last_alloc_idx, page_cnt, false); // next fit */
+  // page_idx = bitmap_scan_and_flip (pool->used_map, 0, page_cnt, false);  // first fit 
+  // page_idx = bitmap_scan_and_flip_nextFit (pool->used_map, pool->last_alloc_idx, page_cnt, false); // next fit 
   page_idx = bitmap_scan_and_flip_bestFit (pool->used_map, page_cnt, false);  // best fit
   lock_release (&pool->lock);
 
@@ -93,8 +93,9 @@ palloc_get_multiple (enum palloc_flags flags, size_t page_cnt)
 
   if (pages != NULL) 
     {
-      if (flags & PAL_ZERO)
+      if (flags & PAL_ZERO) {
         memset (pages, 0, PGSIZE * page_cnt);
+      }
     }
   else 
     {
