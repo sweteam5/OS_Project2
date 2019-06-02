@@ -411,6 +411,23 @@ size_t bitmap_scan_and_flip_bestFit (struct bitmap *b, size_t cnt, bool value) {
     bitmap_set_multiple (b, idx, cnt, !value);
   return idx;
 }
+
+size_t bitmap_scan_and_flip_buddy (struct bitmap *b, size_t cnt, bool value) {
+  /* Refine cnt to buddy system block size before scan bitmap. */
+  size_t bcnt;
+  if (cnt == 1  || cnt == 2)
+    bcnt = cnt;
+  else {   
+    for (size_t i = 2; i <= b->bit_cnt; i * 2) {
+      if (i < cnt && cnt <= i * 2)
+        bcnt = i * 2;
+    }
+  }
+  size_t idx = bitmap_scan (b, 0, bcnt, value);
+  if (idx != BITMAP_ERROR) 
+    bitmap_set_multiple (b, idx, bcnt, !value);
+  return idx;
+}
 
 /* File input and output. */
 
