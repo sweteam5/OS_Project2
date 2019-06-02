@@ -273,7 +273,7 @@ bool bitmap_contains_bestFit (struct bitmap *b, size_t start, size_t cnt, bool v
   ASSERT (b!= NULL);
   ASSERT (start <= b->bit_cnt);
   ASSERT (start + cnt <= b->bit_cnt);
-  while(!bitmap_test (b, start + i) == value) {
+  while(!(bitmap_test (b, start + i) == value)) {
     i++;
     if(i == b->bit_cnt)
       break;
