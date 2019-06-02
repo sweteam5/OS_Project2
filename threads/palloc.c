@@ -31,6 +31,7 @@ struct pool
     struct lock lock;                   /* Mutual exclusion. */
     struct bitmap *used_map;            /* Bitmap of free pages. */
     uint8_t *base;                      /* Base of pool. */
+    size_t last_alloc_idx;              /* Stores last allocated memory index */
   };
 
 /* Two pools: one for kernel data, one for user pages. */
@@ -78,11 +79,15 @@ palloc_get_multiple (enum palloc_flags flags, size_t page_cnt)
     return NULL;
 
   lock_acquire (&pool->lock);
-  page_idx = bitmap_scan_and_flip (pool->used_map, 0, page_cnt, false);
+  page_idx = bitmap_scan_and_flip (pool->used_map, 0, page_cnt, false);  // first fit 
+  page_idx = bitmap_scan_and_flip_nextFit (pool->used_map, pool->last_alloc_idx, page_cnt, false); // next fit 
+  page_idx = bitmap_scan_and_flip_bestFit (pool->used_map, page_cnt, false);  // best fit
   lock_release (&pool->lock);
 
-  if (page_idx != BITMAP_ERROR)
+  if (page_idx != BITMAP_ERROR) {
     pages = pool->base + PGSIZE * page_idx;
+    pool->last_alloc_idx = page_idx + page_cnt;
+  }
   else
     pages = NULL;
 
@@ -167,6 +172,7 @@ init_pool (struct pool *p, void *base, size_t page_cnt, const char *name)
   lock_init (&p->lock);
   p->used_map = bitmap_create_in_buf (page_cnt, base, bm_pages * PGSIZE);
   p->base = base + bm_pages * PGSIZE;
+  p->last_alloc_idx = 0;
 }
 
 /* Returns true if PAGE was allocated from POOL,
