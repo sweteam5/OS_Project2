@@ -273,10 +273,15 @@ bool bitmap_contains_bestFit (struct bitmap *b, size_t start, size_t cnt, bool v
   ASSERT (b!= NULL);
   ASSERT (start <= b->bit_cnt);
   ASSERT (start + cnt <= b->bit_cnt);
-  while(!(bitmap_test (b, start + i) == value)) {
-    i++;
-    if(i == b->bit_cnt)
+
+  while(1) {
+    if(bitmap_test (b, start + i) == value)
       break;
+
+    i++;
+    if(i == b->bit_cnt) {
+      break;
+    }
   }
   if(start + i >= cnt) {
     b->embSize = start + i;
@@ -355,15 +360,17 @@ bitmap_scan_bestFit (const struct bitmap *b, size_t cnt, bool value)
   // bestFit으로 bitmap scan을 진행
   ASSERT (b != NULL);
   size_t best_idx = BITMAP_ERROR;                           // 연속된 cnt개의 페이지 블록을 찾지 못한 경우 BITMAP_ERROR 반환
-  size_t block_size = b->bit_cnt;
+  size_t block_size = b->bit_cnt + 1024;
 
+  printf("All settings OK. Start scanning...\n");
+  printf("%d\n", b->bit_cnt);
   if (cnt <= b->bit_cnt) 
     {
       size_t last = b->bit_cnt - cnt;
       size_t i;
       for (i = 0; i <= last; i++) {
         // TODO: bitmap_contains_bestFit -> bitmap_test를 false가 날때까지 진행
-        if(!bitmap_contains_bestFit(b, i, cnt, value)) {
+        if(!bitmap_contains_bestFit(b, i, cnt, !value)) {
           // if true : block size - cnt 가 block_size-cnt보다 작으면 block_size갱신, best_idx 갱신
           if(b->embSize - cnt < block_size - cnt) {
             best_idx = i;                                   // best_idx 갱신
