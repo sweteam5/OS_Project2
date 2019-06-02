@@ -390,8 +390,7 @@ bitmap_scan_and_flip (struct bitmap *b, size_t start, size_t cnt, bool value)
   return idx;
 }
 
-size_t
-bitmap_scan_and_flip_nextFit (struct bitmap *b, size_t start, size_t cnt, bool value) {
+size_t bitmap_scan_and_flip_nextFit (struct bitmap *b, size_t start, size_t cnt, bool value) {
   /* bitmap_scan_next_goFirst()를 활용하기 위해 bitmap_scan_and_flip()에서 분리 */
   size_t idx = bitmap_scan (b, start, cnt, value);                      // 마지막 할당 인덱스부터 끝까지 탐색
   if(idx == BITMAP_ERROR)
@@ -406,7 +405,7 @@ bitmap_scan_and_flip_nextFit (struct bitmap *b, size_t start, size_t cnt, bool v
   
 }
 
-bitmap_scan_and_flip_bestFit (struct bitmap *b, size_t cnt, bool value) {
+size_t bitmap_scan_and_flip_bestFit (struct bitmap *b, size_t cnt, bool value) {
   size_t idx = bitmap_scan_bestFit (b, cnt, value);                     // bestFit 알고리즘에 따라 탐색
   if (idx != BITMAP_ERROR) 
     bitmap_set_multiple (b, idx, cnt, !value);
