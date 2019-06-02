@@ -3,7 +3,7 @@ Implementation of Memory Management Schemes
 
 ## 프로젝트 요구 사항 
 1. 가상 메모리 정책 구현 및 성능 평가
-  - ~Page Allocation 정책 구현~
+  - Page Allocation 정책 구현(진행중)
   - Page Allocation 정책의 성능 평가
   - Frame Table 구현
   - Page Fault Handler 구현
