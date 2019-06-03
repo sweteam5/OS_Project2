@@ -364,7 +364,7 @@ bitmap_scan_bestFit (const struct bitmap *b, size_t cnt, bool value)
 
   if (cnt <= b->bit_cnt) 
     {
-      size_t last = b->bit_cnt;
+      size_t last = b->bit_cnt - cnt;
       size_t i = 0;
       while (i <= last) {
         if(!bitmap_contains_bestFit(b, i, cnt, !value)) {

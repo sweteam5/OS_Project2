@@ -106,7 +106,6 @@ main (void)
 
   /* Initialize interrupt handlers. */
   intr_init ();
-  printf("intr_init ends.\n");
   timer_init ();
   kbd_init ();
   input_init ();
