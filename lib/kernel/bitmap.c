@@ -283,8 +283,8 @@ bool bitmap_contains_bestFit (struct bitmap *b, size_t start, size_t cnt, bool v
       break;
     }
   }
-  if(start + i >= cnt) {
-    b->embSize = start + i;
+  if(i - start >= cnt) {
+    b->embSize = i - start;
     return false;
   } else {
     return true;
@@ -364,17 +364,19 @@ bitmap_scan_bestFit (const struct bitmap *b, size_t cnt, bool value)
 
   if (cnt <= b->bit_cnt) 
     {
-      size_t last = b->bit_cnt - cnt;
-      size_t i;
-      for (i = 0; i <= last; i++) {
-        // TODO: bitmap_contains_bestFit -> bitmap_test를 false가 날때까지 진행
+      size_t last = b->bit_cnt;
+      size_t i = 0;
+      while (i <= last) {
         if(!bitmap_contains_bestFit(b, i, cnt, !value)) {
           // if true : block size - cnt 가 block_size-cnt보다 작으면 block_size갱신, best_idx 갱신
           if(b->embSize - cnt < block_size - cnt) {
             best_idx = i;                                   // best_idx 갱신
-            block_size = b->embSize;                        // block_size 갱신
+            block_size = b->embSize;                       // block_size 갱신
+            i = i + block_size;
+            continue;
           }
         }
+        i++;
       }
       return best_idx;
     }
