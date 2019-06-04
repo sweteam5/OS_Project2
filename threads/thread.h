@@ -6,6 +6,10 @@
 #include <stdint.h>
 #include "synch.h"
 
+#ifdef VM
+#include "vm/page.h"
+#endif
+
 /* States in a thread's life cycle. */
 enum thread_status
   {
@@ -110,6 +114,14 @@ struct thread
       
     int next_fd;
     struct file **fd_table;
+#endif
+
+#ifdef VM
+    // Project 3: Supplemental page table.
+    struct supplemental_page_table *supt;   /* Supplemental Page Table. */
+
+    // Project 3: Memory Mapped Files.
+    struct list mmap_list;              /* List of struct mmap_desc. */
 #endif
 
     /* Owned by thread.c. */
