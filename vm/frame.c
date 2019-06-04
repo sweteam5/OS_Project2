@@ -27,21 +27,19 @@ static struct list_elem *clock_ptr; /* the pointer in clock algorithm */
 static unsigned frame_hash_func(const struct hash_elem *elem, void *aux);
 static bool     frame_less_func(const struct hash_elem *, const struct hash_elem *, void *aux);
 
-/**
- * Frame Table Entry
- */
+
+//frame table entry
 struct frame_table_entry
   {
-    void *kpage;               /* Kernel page, mapped to physical address */
+    void *kpage;               // use kernel page to map physical address 
 
-    struct hash_elem helem;    /* see ::frame_map */
-    struct list_elem lelem;    /* see ::frame_list */
+    struct hash_elem helem;    // for frame map
+    struct list_elem lelem;    // for frame list
 
-    void *upage;               /* User (Virtual Memory) Address, pointer to page */
-    struct thread *t;          /* The associated thread. */
+    void *upage;               // user address. point to page (VM) 
+    struct thread *t;          // save thread which call frame (current)
 
-    bool pinned;               /* Used to prevent a frame from being evicted, while it is acquiring some resources.
-                                  If it is true, it is never evicted. */
+    bool pinned;               
   };
 
 
@@ -50,7 +48,7 @@ static void vm_frame_do_free (void *kpage, bool free_page);
 
 
 void
-vm_frame_init ()
+vm_frame_init ()          // frame init(reset) , called only once
 {
   lock_init (&frame_lock);
   hash_init (&frame_map, frame_hash_func, frame_less_func, NULL);
@@ -58,21 +56,14 @@ vm_frame_init ()
   clock_ptr = NULL;
 }
 
-/**
- * Allocate a new frame,
- * and return the address of the associated page.
- */
 void*
-vm_frame_allocate (enum palloc_flags flags, void *upage)
+vm_frame_allocate (enum palloc_flags flags, void *upage) // create frame page to map with user virtual address
 {
   lock_acquire (&frame_lock);
 
-  void *frame_page = palloc_get_page (PAL_USER | flags);
-  if (frame_page == NULL) {
-    // page allocation failed.
-
-    /* first, swap out the page */
-    struct frame_table_entry *f_evicted = pick_frame_to_evict( thread_current()->pagedir );
+  void *frame_page = palloc_get_page (PAL_USER | flags); //PAL_USER = user page. get from user pool
+  if (frame_page == NULL) { //if page allocation failed
+    struct frame_table_entry *f_evicted = pick_frame_to_evict( thread_current()->pagedir ); //swap out
 
 #if DEBUG
     printf("f_evicted: %x th=%x, pagedir = %x, up = %x, kp = %x, hash_size=%d\n", f_evicted, f_evicted->t,
@@ -99,7 +90,7 @@ vm_frame_allocate (enum palloc_flags flags, void *upage)
 
   struct frame_table_entry *frame = malloc(sizeof(struct frame_table_entry));
   if(frame == NULL) {
-    // frame allocation failed. a critical state or panic?
+    // frame allocation failed
     lock_release (&frame_lock);
     return NULL;
   }
@@ -117,9 +108,7 @@ vm_frame_allocate (enum palloc_flags flags, void *upage)
   return frame_page;
 }
 
-/**
- * Deallocate a frame or page.
- */
+// make free to frame or page
 void
 vm_frame_free (void *kpage)
 {
@@ -128,9 +117,7 @@ vm_frame_free (void *kpage)
   lock_release (&frame_lock);
 }
 
-/**
- * Just removes then entry from table, do not palloc free.
- */
+//Just removes then entry from table, do not palloc free.
 void
 vm_frame_remove_entry (void *kpage)
 {
@@ -139,11 +126,8 @@ vm_frame_remove_entry (void *kpage)
   lock_release (&frame_lock);
 }
 
-/**
- * An (internal, private) method --
- * Deallocates a frame or page (internal procedure)
- * MUST BE CALLED with 'frame_lock' held.
- */
+
+ //free() frame or page (internal procedure)
 void
 vm_frame_do_free (void *kpage, bool free_page)
 {
@@ -171,7 +155,7 @@ vm_frame_do_free (void *kpage, bool free_page)
   free(f);
 }
 
-/** Frame Eviction Strategy : The Clock Algorithm */
+//using clock algorithm to check out page
 struct frame_table_entry* clock_frame_next(void);
 struct frame_table_entry* pick_frame_to_evict( uint32_t *pagedir )
 {
@@ -184,13 +168,13 @@ struct frame_table_entry* pick_frame_to_evict( uint32_t *pagedir )
     struct frame_table_entry *e = clock_frame_next();
     // if pinned, continue
     if(e->pinned) continue;
-    // if referenced, give a second chance.
+    // if referenced, using a second chance.
     else if( pagedir_is_accessed(pagedir, e->upage)) {
       pagedir_set_accessed(pagedir, e->upage, false);
       continue;
     }
 
-    // OK, here is the victim : unreferenced since its last chance
+    // unreferenced since its last chance. -> eviction
     return e;
   }
 

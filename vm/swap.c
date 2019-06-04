@@ -11,10 +11,11 @@ static const size_t SECTORS_PER_PAGE = PGSIZE / BLOCK_SECTOR_SIZE;
 // the number of possible (swapped) pages.
 static size_t swap_size;
 
+// swap init
 void
 vm_swap_init ()
 {
-  ASSERT (SECTORS_PER_PAGE > 0); // 4096/512 = 8?
+  ASSERT (SECTORS_PER_PAGE > 0); // 4096/512 = 8
 
   // Initialize the swap disk
   swap_block = block_get_role(BLOCK_SWAP);
@@ -32,20 +33,20 @@ vm_swap_init ()
   bitmap_set_all(swap_available, true);
 }
 
-
+  // Do swap out. save page information to swap disk & retrun swap index
 swap_index_t vm_swap_out (void *page)
 {
   // Ensure that the page is on user's virtual memory.
   ASSERT (page >= PHYS_BASE);
 
   // Find an available block region to use
-  size_t swap_index = bitmap_scan (swap_available, /*start*/0, /*cnt*/1, true);
+  size_t swap_index = bitmap_scan (swap_available,0, 1, true); //start at 0  , count = 1
 
   size_t i;
   for (i = 0; i < SECTORS_PER_PAGE; ++ i) {
     block_write(swap_block,
-        /* sector number */  swap_index * SECTORS_PER_PAGE + i,
-        /* target address */ page + (BLOCK_SECTOR_SIZE * i)
+          swap_index * SECTORS_PER_PAGE + i, // sector number 
+          page + (BLOCK_SECTOR_SIZE * i) // target address 
         );
   }
 
@@ -53,8 +54,7 @@ swap_index_t vm_swap_out (void *page)
   bitmap_set(swap_available, swap_index, false);
   return swap_index;
 }
-
-
+ // DO swap in. read page at swap_index & save to page
 void vm_swap_in (swap_index_t swap_index, void *page)
 {
   // Ensure that the page is on user's virtual memory.

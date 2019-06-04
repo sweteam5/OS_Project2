@@ -2,8 +2,15 @@
 #include <inttypes.h>
 #include <stdio.h>
 #include "userprog/gdt.h"
+#include "userprog/syscall.h"
+#include "userprog/pagedir.h"
 #include "threads/interrupt.h"
 #include "threads/thread.h"
+#include "threads/vaddr.h"
+#ifdef VM
+#include "vm/page.h"
+#include "vm/frame.h"
+#endif
 
 /* Number of page faults processed. */
 static long long page_fault_cnt;
@@ -147,6 +154,41 @@ page_fault (struct intr_frame *f)
   not_present = (f->error_code & PF_P) == 0;
   write = (f->error_code & PF_W) != 0;
   user = (f->error_code & PF_U) != 0;
+
+  #if VM
+   //Virtual memory handling.
+   //First, bring in the page to which fault_addr refers. 
+  struct thread *curr = thread_current(); // Current thread. 
+  void* fault_page = (void*) pg_round_down(fault_addr);
+
+  if (!not_present) {
+    // attempt to write to a read-only region is always killed.
+    goto PAGE_FAULT_VIOLATED_ACCESS;
+  }
+
+  /* (4.3.3) Obtain the current value of the user program's stack pointer.
+   * If the page fault is from user mode, we can obtain from intr_frame `f`,
+   * but we cannot from kernel mode. We've stored the current esp
+   * at the beginning of system call into the thread for this case. */
+  void* esp = user ? f->esp : curr->current_esp;
+
+  if(! vm_load_page(curr->supt, curr->pagedir, fault_page) ) {
+    goto PAGE_FAULT_VIOLATED_ACCESS;
+  }
+
+  // success
+  return;
+
+
+PAGE_FAULT_VIOLATED_ACCESS:
+#endif
+  /* (3.1.5) a page fault in the kernel merely sets eax to 0xffffffff
+   * and copies its former value into eip. see syscall.c:get_user() */
+  if(!user) { // kernel mode
+    f->eip = (void *) f->eax;
+    f->eax = 0xffffffff;
+    return;
+  }
 
   /* To implement virtual memory, delete the rest of the function
      body, and replace it with code that brings in the page to

@@ -5,9 +5,7 @@
 #include <hash.h>
 #include "filesys/off_t.h"
 
-/**
- * Indicates a state of page.
- */
+//Indicates page state
 enum page_status {
   ALL_ZERO,         // All zeros
   ON_FRAME,         // Actively in memory
@@ -15,12 +13,10 @@ enum page_status {
   FROM_FILESYS      // from filesystem (or executable)
 };
 
-/**
- * Supplemental page table. The scope is per-process.
- */
+//Supplemental page table, The scope is per-process.
 struct supplemental_page_table
   {
-    /* The hash table, page -> spte */
+    //The hash table, page -> spte 
     struct hash page_map;
   };
 
@@ -48,9 +44,7 @@ struct supplemental_page_table_entry
   };
 
 
-/*
- * Methods for manipulating supplemental page tables.
- */
+//Methods for manipulating supplemental page tables.
 
 struct supplemental_page_table* vm_supt_create (void);
 void vm_supt_destroy (struct supplemental_page_table *);

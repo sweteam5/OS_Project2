@@ -16,6 +16,7 @@ static bool     spte_less_func(const struct hash_elem *, const struct hash_elem 
 static void     spte_destroy_func(struct hash_elem *elem, void *aux);
 
 
+//use supt to maped with user page
 struct supplemental_page_table*
 vm_supt_create (void)
 {
@@ -33,15 +34,15 @@ vm_supt_destroy (struct supplemental_page_table *supt)
 
   hash_destroy (&supt->page_map, spte_destroy_func);
   free (supt);
-}
+} 
 
 
-/**
- * Install a page (specified by the starting address `upage`) which
- * is currently on the frame, in the supplemental page table.
- *
- * Returns true if successful, false otherwise.
- * (In case of failure, a proper handling is required later -- process.c)
+/*
+  Install a page (specified by the starting address `upage`) which
+  is currently on the frame, in the supplemental page table.
+ 
+  Returns true if successful, false otherwise.
+  (In case of failure, a proper handling is required later -- process.c)
  */
 bool
 vm_supt_install_frame (struct supplemental_page_table *supt, void *upage, void *kpage)
@@ -68,10 +69,10 @@ vm_supt_install_frame (struct supplemental_page_table *supt, void *upage, void *
   }
 }
 
-/**
- * Install new a page (specified by the starting address `upage`)
- * on the supplemental page table. The page is of type ALL_ZERO,
- * indicates that all the bytes is (lazily) zero.
+/*
+  Install new a page (specified by the starting address `upage`)
+  on the supplemental page table. The page is of type ALL_ZERO,
+  indicates that all the bytes is (lazily) zero.
  */
 bool
 vm_supt_install_zeropage (struct supplemental_page_table *supt, void *upage)
@@ -93,9 +94,9 @@ vm_supt_install_zeropage (struct supplemental_page_table *supt, void *upage)
   return false;
 }
 
-/**
- * Mark an existent page to be swapped out,
- * and update swap_index in the SPTE.
+/*
+  Mark an existent page to be swapped out,
+  and update swap_index in the SPTE.
  */
 bool
 vm_supt_set_swap (struct supplemental_page_table *supt, void *page, swap_index_t swap_index)
@@ -111,9 +112,9 @@ vm_supt_set_swap (struct supplemental_page_table *supt, void *page, swap_index_t
 }
 
 
-/**
- * Install a new page (specified by the starting address `upage`)
- * on the supplemental page table, of type FROM_FILESYS.
+/*
+  Install a new page (specified by the starting address `upage`)
+  on the supplemental page table, of type FROM_FILESYS.
  */
 bool
 vm_supt_install_filesys (struct supplemental_page_table *supt, void *upage,
@@ -142,9 +143,9 @@ vm_supt_install_filesys (struct supplemental_page_table *supt, void *upage,
 }
 
 
-/**
- * Lookup the SUPT and find a SPTE object given the user page address.
- * returns NULL if no such entry is found.
+/*
+ Lookup the SUPT and find a SPTE object given the user page address.
+ returns NULL if no such entry is found.
  */
 struct supplemental_page_table_entry*
 vm_supt_lookup (struct supplemental_page_table *supt, void *page)
@@ -158,13 +159,12 @@ vm_supt_lookup (struct supplemental_page_table *supt, void *page)
   return hash_entry(elem, struct supplemental_page_table_entry, elem);
 }
 
-/**
- * Returns if the SUPT contains an SPTE entry given the user page address.
- */
+
+//Returns if the SUPT contains an SPTE entry given the user page address.
 bool
 vm_supt_has_entry (struct supplemental_page_table *supt, void *page)
 {
-  /* Find the SUPT entry. If not found, it is an unmanaged page. */
+  //Find the SUPT entry. If not found, it is an unmanaged page. 
   struct supplemental_page_table_entry *spte = vm_supt_lookup(supt, page);
   if(spte == NULL) return false;
 
@@ -183,13 +183,12 @@ vm_supt_set_dirty (struct supplemental_page_table *supt, void *page, bool value)
 
 static bool vm_load_page_from_filesys(struct supplemental_page_table_entry *, void *);
 
-/**
- * Load the page, specified by the address `upage`, back into the memory.
- */
+
+//Load the page, specified by the address `upage`, back into the memory.
 bool
 vm_load_page(struct supplemental_page_table *supt, uint32_t *pagedir, void *upage)
 {
-  /* see also userprog/exception.c */
+  // you need to see also userprog/exception.c for page fault handling 
 
   // 1. Check if the memory reference is valid
   struct supplemental_page_table_entry *spte;
@@ -345,7 +344,7 @@ static bool vm_load_page_from_filesys(struct supplemental_page_table_entry *spte
 }
 
 
-/** Pin the page. */
+// Pin page to lock 
 void
 vm_pin_page(struct supplemental_page_table *supt, void *page)
 {
@@ -360,7 +359,7 @@ vm_pin_page(struct supplemental_page_table *supt, void *page)
   vm_frame_pin (spte->kpage);
 }
 
-/** Unpin the page. */
+// unlock page
 void
 vm_unpin_page(struct supplemental_page_table *supt, void *page)
 {
@@ -372,9 +371,6 @@ vm_unpin_page(struct supplemental_page_table *supt, void *page)
     vm_frame_unpin (spte->kpage);
   }
 }
-
-
-/* Helpers */
 
 // Hash Functions required for [frame_map]. Uses 'kaddr' as key.
 static unsigned
