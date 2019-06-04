@@ -129,8 +129,10 @@ main (void)
   printf ("Boot complete.\n");
   
   /* Run actions specified on kernel command line. */
+  int64_t a = timer_ticks();
+  printf("%d is tick\n",a);
   run_actions (argv);
-
+  
   /* Finish up. */
   shutdown ();
   thread_exit ();

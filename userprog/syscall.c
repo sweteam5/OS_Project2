@@ -19,7 +19,7 @@
 
 #include "devices/shutdown.h"
 #include "devices/input.h"
-
+#include "devices/timer.h"
 
 struct lock file_lock;
 
@@ -173,6 +173,8 @@ exit (int status)
 {
   thread_current ()->exit_status = status;
   printf ("process %s: exited with %d\n", thread_name (), status);
+  int64_t a = timer_ticks();
+  printf("%d is tick\n",a);
   thread_exit ();
 }
 
