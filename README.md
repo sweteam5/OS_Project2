@@ -14,6 +14,13 @@ Implementation of Memory Management Schemes
 보고서에는 각 요구사항 별 문제 해결 방법, 요구사항 수행(개발 또는 성능측정) 내용과 결과 등을 상세하게 기술해야 한다.<br>
 성능 평가 척도의 경우 선정한 이유를 기술한다. 
 
+## VM 브랜치 Make 시
+1. file system 생성
+2. swap disk 생성
+3. 초기화
+4. 유저프로그램 load
+5. 유저프로그램 실행
+의 순서를 지켜주시기 바
 
 ## Team Members
 - 20154637 박상현
